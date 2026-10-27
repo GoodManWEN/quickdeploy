@@ -218,3 +218,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#
+deploy.conf
+node.env
+config.json
+*.log
+backups/
+*.key
+*.pem
+node.env
+config.json
+*.log
+backups/
+*.key
+*.pem
