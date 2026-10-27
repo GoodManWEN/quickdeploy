@@ -1,0 +1,14 @@
+# 每台服务器只需填写它自己的域名；先用宝塔或现有 Nginx 建好 HTTPS 网站。
+SITE_DOMAIN=''
+
+# 宝塔留空时自动使用 /www/server/panel/vhost/nginx/<域名>.conf。
+# 普通 Nginx 可填写 /etc/nginx/sites-available/<站点文件>。
+NGINX_SITE=''
+
+# 通常不需要修改。自动识别宝塔；否则使用系统 Nginx。
+NGINX_BIN=''
+NGINX_MAIN=''
+
+# 与此前已验证的方案保持一致；本脚本不会自动升级已有 Xray。
+XRAY_VERSION='v26.10.21'
+XRAY_PORT=10099
