@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fieldnotes. — 把喜欢的风景收进一本册子</title>
+  <meta name="description" content="fieldnotes. 是一个个人的视觉收藏夹，收集山野、海岸与林间的风景影像。">
+  <meta name="theme-color" content="#F5F3EE">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+/* ==========================================================================
+   fieldnotes. — 站点唯一样式表
+   设计值见 docs/SPEC.md 第 3 节：底色 #F5F3EE、正文 #232722、
+   次要文字 #60685E、强调 #697A60、边框 #DDDCD5；内容宽 1160px。
+   不引入任何外部样式、远程字体、框架或图标字体。
+   ========================================================================== */
+
+:root {
+  --color-bg: #F5F3EE;
+  --color-text: #232722;
+  --color-muted: #60685E;
+  --color-accent: #697A60;
+  --color-border: #DDDCD5;
+
+  --width-content: 1160px;
+  --gutter: 32px;
+  --radius: 2px;
+
+  --font-serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", "STSong", Georgia, "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+  --dur: 200ms;
+  --ease: cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   1. 基础元素
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--width-content) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-text);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. 页头与导航
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  min-height: 76px;
+  padding-block: 14px;
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.35rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.site-nav a {
+  padding-block: 0.3rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+/* --------------------------------------------------------------------------
+   3. 内容区与文字
+   -------------------------------------------------------------------------- */
+
+.intro {
+  padding-block: clamp(2.75rem, 6vw, 4.5rem) 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 1.5rem;
+  height: 1px;
+  background-color: var(--color-accent);
+}
+
+.intro h1 {
+  margin-top: 1.1rem;
+  font-size: clamp(1.9rem, 4.4vw, 3rem);
+  letter-spacing: 0.01em;
+  max-width: 22em;
+}
+
+.intro__lede {
+  margin-top: 1.15rem;
+  max-width: 60ch;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.section {
+  padding-block: clamp(2.5rem, 6vw, 4rem);
+}
+
+.section--rule {
+  border-top: 1px solid var(--color-border);
+}
+
+.section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 62ch;
+  margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.section__head h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+}
+
+.section__lede {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  max-width: 58ch;
+}
+
+.text-link {
+  display: inline-block;
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color var(--dur) var(--ease), text-decoration-thickness var(--dur) var(--ease);
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+  text-decoration-color: var(--color-text);
+  text-decoration-thickness: 2px;
+}
+
+.text-link + .text-link {
+  margin-left: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. 动态图集：封面、分类、卡片、状态
+   -------------------------------------------------------------------------- */
+
+.gallery-app {
+  display: flow-root;
+}
+
+.hero {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 clamp(2rem, 4vw, 2.75rem);
+}
+
+.hero__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background-color: var(--color-border);
+  border-radius: var(--radius);
+}
+
+.hero__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 68ch;
+}
+
+.hero__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.hero__note {
+  color: var(--color-muted);
+  font-size: 0.925rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  border: 0;
+}
+
+.filter-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.5rem 1.05rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--color-muted);
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.filter-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.filter-btn.is-active {
+  color: var(--color-bg);
+  background-color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3vw, 2.25rem) clamp(1rem, 2.2vw, 1.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery > li {
+  min-width: 0;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+}
+
+/* 卡片主体是 article，图片区由真正的 button 承担点击与键盘操作；
+   来源链接独立于按钮之外，避免把交互元素嵌进按钮造成的焦点不可达。 */
+.card__open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  cursor: zoom-in;
+}
+
+/* 让点击/键盘目标覆盖整张卡片（含标题与短记），
+   同时把来源链接抬到覆盖层之上，保持可点击、可 Tab 到达。 */
+.card__open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.card__media {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background-color: var(--color-border);
+  border-radius: var(--radius);
+}
+
+.card__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 240ms var(--ease);
+}
+
+.card:hover .card__img {
+  transform: scale(1.015);
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.9rem;
+  min-width: 0;
+}
+
+.card__title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.card__note {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin-top: 0.1rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.card__source {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  transition: text-decoration-color var(--dur) var(--ease);
+}
+
+.card__source:hover,
+.card__source:focus-visible {
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
+}
+
+/* 图片失败后的本地占位：尺寸与正常卡片一致，不引起跳动 */
+.is-fallback {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.is-fallback .card__img,
+.is-fallback .hero__img {
+  object-fit: cover;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 1.25rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-muted);
+  font-size: 0.925rem;
+  line-height: 1.8;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.status--loading {
+  color: var(--color-muted);
+}
+
+.status--error {
+  border-style: solid;
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.retry-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.5rem 1.2rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--color-text);
+  background-color: transparent;
+  border: 1px solid var(--color-text);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.retry-btn:hover {
+  color: var(--color-bg);
+  background-color: var(--color-text);
+}
+
+/* --------------------------------------------------------------------------
+   5. 原生 dialog 浮层
+   -------------------------------------------------------------------------- */
+
+.lightbox {
+  position: relative;
+  width: min(1080px, calc(100vw - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  /* 滚动交给内部 panel：关闭按钮相对 dialog 定位，长内容滚动时不会跑出视野。 */
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.lightbox::backdrop {
+  background-color: rgb(35 39 34 / 0.74);
+}
+
+.lightbox[open] {
+  animation: lightbox-in var(--dur) var(--ease);
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lightbox__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: calc(100dvh - 2.25rem);
+  overflow: auto;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  padding-top: 3.75rem;
+}
+
+.lightbox__figure {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  min-width: 0;
+}
+
+/* 大图档固定为 1920×1280（3:2），预先占位避免加载完成时的布局跳动；
+   max-height 生效时由 object-fit: contain 兜住比例。 */
+.lightbox__img {
+  display: block;
+  width: min(100%, 102dvh);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  max-height: 68dvh;
+  margin-inline: auto;
+  object-fit: contain;
+  background-color: var(--color-border);
+}
+
+.lightbox__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 70ch;
+}
+
+.lightbox__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.lightbox__note {
+  color: var(--color-muted);
+  font-size: 0.925rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.lightbox__close:hover {
+  border-color: var(--color-text);
+}
+
+/* --------------------------------------------------------------------------
+   6. 随记与关于
+   -------------------------------------------------------------------------- */
+
+.notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.note__title {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.note__body {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.85;
+}
+
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.about__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 62ch;
+}
+
+.about__text h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+}
+
+.about__text p {
+  font-size: 0.975rem;
+  line-height: 1.9;
+}
+
+.about__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-left: clamp(1rem, 3vw, 2rem);
+  border-left: 1px solid var(--color-border);
+}
+
+.about__aside h3 {
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.about__aside p {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.85;
+}
+
+/* --------------------------------------------------------------------------
+   7. 联系页与 404
+   -------------------------------------------------------------------------- */
+
+.contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.contact__text h3 {
+  font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+  margin-bottom: 1rem;
+}
+
+.topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.topic-list li {
+  position: relative;
+  padding-left: 1.4rem;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.85;
+}
+
+.topic-list li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--color-accent);
+}
+
+/* 留言表单：与「关于」卡片同一套边框语言，边框顶部用强调色作唯一强调 */
+.contact__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+}
+
+.contact__panel h3 {
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+  line-height: 1.45;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field__label {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.field__input,
+.field__area {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.field__area {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.field__input:focus-visible,
+.field__area:focus-visible {
+  border-color: var(--color-text);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.btn-primary {
+  appearance: none;
+  padding: 0.6rem 1.35rem;
+  color: var(--color-bg);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  background-color: var(--color-text);
+  border: 1px solid var(--color-text);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: box-shadow var(--dur) var(--ease);
+}
+
+.btn-primary:hover {
+  /* 只加内描边，不改文字/底色对比度 */
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.btn-primary[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+/* 提交结果：字数与语义已经能区分成功/失败，颜色不再是唯一信号 */
+.form-status {
+  min-height: 1.4em;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.form-status--pending {
+  color: var(--color-muted);
+}
+
+.form-status--ok {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.form-status--error {
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.form-note {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.form-note code {
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.contact-return {
+  border-top: 1px solid var(--color-border);
+}
+
+.notfound {
+  padding-block: clamp(4rem, 12vh, 8rem);
+}
+
+.notfound h1 {
+  margin-top: 1.1rem;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+
+.notfound__actions {
+  margin-top: 1.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   8. 页脚
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  padding-block: clamp(2rem, 4vw, 2.75rem);
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem 2.5rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.site-footer__brand {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.site-footer__note {
+  max-width: 54ch;
+}
+
+.site-footer a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.2em;
+}
+
+.site-footer a:hover {
+  text-decoration-color: var(--color-text);
+}
+
+.site-footer__meta {
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   9. 响应式：图集 3 / 2 / 1 列
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about {
+    grid-template-columns: 1fr;
+  }
+
+  .about__aside {
+    padding-left: 0;
+    padding-top: 1rem;
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .contact {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --gutter: 20px;
+  }
+
+  body {
+    font-size: 0.975rem;
+  }
+
+  .site-header__inner {
+    min-height: 0;
+    gap: 0.5rem;
+  }
+
+  .site-nav {
+    gap: 0.2rem 1.1rem;
+    font-size: 0.875rem;
+  }
+
+  .gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .intro__lede,
+  .section__lede {
+    font-size: 0.95rem;
+  }
+
+  .lightbox {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .lightbox__panel {
+    padding: 3.4rem 0.9rem 1rem;
+  }
+
+  .lightbox__img {
+    max-height: 58dvh;
+  }
+
+  .site-footer__meta {
+    white-space: normal;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   10. 动效：系统要求减少时全部关闭
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .card:hover .card__img {
+    transform: none;
+  }
+
+  .lightbox[open] {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. 滚动浮现：显形程度直接由滚动位置决定（纯 CSS，不需要 JS）
+
+   不用 IntersectionObserver 那种「进入视口就播一段 220ms」的阈值动画——
+   那样看起来是「突然出现」。这里用 CSS 滚动驱动动画（view timeline），
+   元素的 opacity/位移是滚动进度的连续函数：元素上沿刚触到视口底部时完全
+   透明，再往上滚 320px 的过程中逐渐显形。
+
+   用像素而不是百分比作为 range：段落比视口还高时也能走完，不会半透明卡住。
+   浏览器不支持 animation-timeline 时整段不生效，内容直接可见；系统要求
+   减少动效时同样不生效——两种降级都只呈现静态页面，不会藏内容。
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal],
+    .gallery .card {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      /* 两个数字就是唯一的调节旋钮：320px = 从「刚露头」到「完全显形」需要滚动的距离，
+         rise-in 里的 28px = 起始位移。想让显形更慢就加大前者。 */
+      animation-range: entry 0px entry 320px;
+    }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* 键盘焦点进入时直接给最终态，避免焦点落在半透明的元素上 */
+    [data-reveal]:focus-within,
+    .gallery .card:focus-within {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="site-header">
+    <div class="wrap site-header__inner">
+      <a class="brand" href="/">fieldnotes.</a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="#gallery">图集</a>
+        <a href="#notes">随记</a>
+        <a href="#about">关于</a>
+        <a href="#contact">联系</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="intro wrap">
+      <p class="eyebrow">视觉收藏 · Field Notes</p>
+      <h1>把喜欢的风景收进一本册子。</h1>
+      <p class="intro__lede">这里是一个人的视觉收藏夹：山野、海岸与林间共同排列。留下看过之后还会想起的画面，以及随感笔记。</p>
+    </section>
+
+    <section id="gallery" class="section wrap">
+      <div class="section__head">
+        <p class="eyebrow">图集</p>
+        <h2 id="gallery-title">二十四帧风景</h2>
+        <p class="section__lede">点击可查看大图、标题、短记与原作者链接。</p>
+      </div>
+
+      <section id="gallery-app" class="gallery-app" aria-labelledby="gallery-title">
+        <p class="status status--loading" data-gallery-status role="status">正在载入图集…</p>
+        <noscript><p class="status">图集需要启用 JavaScript 才能显示；上方介绍、随记与下方关于内容不受影响。</p></noscript>
+      </section>
+    </section>
+
+    <section id="notes" class="section section--rule wrap">
+      <div class="section__head" data-reveal>
+        <p class="eyebrow">随记</p>
+        <h2>收藏时的三则笔记</h2>
+        <p class="section__lede">整理图集时写下的零散想法，关于留白、颜色和排列的节奏。</p>
+      </div>
+
+      <div class="notes">
+        <article class="note" data-reveal>
+          <h3 class="note__title">留白的分量</h3>
+          <p class="note__body">风景里最先让我停下来的，常常不是主体，而是主体周围的空。天空多留一点，山脊就退得远一点；画面边缘松一点，视线才有地方落。收藏时我会特意把留白多的图放在一起，让整页有喘息的位置。</p>
+        </article>
+        <article class="note" data-reveal>
+          <h3 class="note__title">低饱和的温度</h3>
+          <p class="note__body">灰绿、雾蓝、旧纸一样的米色，单独看都不响亮，排在一起却有一种慢下来的温度。比起把饱和度推高，我更愿意让颜色保持克制，像翻一本放了很久的画册，纸页自己会说话。</p>
+        </article>
+        <article class="note" data-reveal>
+          <h3 class="note__title">让图集有呼吸</h3>
+          <p class="note__body">二十四张图按清单顺序铺开，不随机、不打乱。相邻两张如果色调相近，我会希望第三张能换一个更开阔的视角；横构图多一些，滚动时的节奏会更稳。这种排列没有标准答案，只是我整理时的习惯。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact" class="section section--rule wrap">
+      <div class="section__head" data-reveal>
+        <p class="eyebrow">联系</p>
+        <h2>聊一聊风景、颜色，或者一次整理</h2>
+        <p class="section__lede">如果你也在收集风景影像，或者对这里的选图、配色和排版有想法，欢迎交流。</p>
+      </div>
+
+      <div class="contact">
+<div class="contact__text" data-reveal>
+        <h3>可以聊的话题</h3>
+        <ul class="topic-list">
+          <li>风景影像的选图与编排，什么样的顺序读起来更顺。</li>
+          <li>低饱和配色、留白和版式的小经验。</li>
+        </ul>
+      </div>
+
+      <div class="contact__panel" data-reveal>
+        <h3 id="form-title">给站长留言</h3>
+        <form class="contact-form" method="post" action="/api/contact" data-contact-form aria-labelledby="form-title">
+          <div class="field">
+            <label class="field__label" for="contact-name">称呼</label>
+            <input class="field__input" id="contact-name" name="name" type="text" maxlength="40" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label class="field__label" for="contact-way">联系方式</label>
+            <input class="field__input" id="contact-way" name="contact" type="text" maxlength="80" autocomplete="off" placeholder="邮箱、微信，或任何一种能联系到你的方式" required>
+          </div>
+          <div class="field">
+            <label class="field__label" for="contact-message">留言</label>
+            <textarea class="field__area" id="contact-message" name="message" rows="5" maxlength="1000" required></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" type="submit">提交留言</button>
+            <p class="form-status" data-contact-status role="status" aria-live="polite"></p>
+          </div>
+        </form>
+        <noscript><p class="form-note">提交需要启用 JavaScript；上面的文字内容不受影响，可以先阅读。</p></noscript>
+      </div>
+      </div>
+    </section>
+
+    <section id="about" class="section section--rule about wrap">
+      <div class="about__text" data-reveal>
+        <p class="eyebrow">关于</p>
+        <h2>关于这本册子</h2>
+        <p>我是这本册子的整理者，不是照片的拍摄者。这里收集的是我从互联网公开图集上挑出来的风景：山野、海岸、林间各八张。</p>
+        <p>站内文字是我对构图、颜色和排列的私人笔记，不代表原作者的创作意图。照片的作者、原始页面与许可信息，请以每张图下方的来源链接为准。</p>
+      </div>
+      <aside class="about__aside" aria-labelledby="source-title" data-reveal>
+        <h3 id="source-title">来源说明</h3>
+        <p>版权归各自原作者所有，本站不主张任何照片的权利。</p>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <p class="site-footer__brand">fieldnotes.</p>
+      <p class="site-footer__note">图片来自 Picsum Photos，版权归原作者；具体来源链接随每张图给出。本站只做整理与记录，不声称拥有照片版权。</p>
+      <p class="site-footer__meta">© 2026 fieldnotes. · <a href="#contact">联系</a></p>
+    </div>
+  </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.44/dist/vue.runtime.global.prod.js" integrity="sha384-b/AjbaAXeH6ypBqFEi7YTDZEXY0MhY7emG1a6rRRZKjOzGUM88lZ9eHxgkRgUNBR" crossorigin="anonymous" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  'use strict';
+
+  /* @fieldnotes:validation-start */
+  /* 这一段是纯函数，不依赖 window / document / Vue，便于用 node 单独验证。 */
+
+  var MIN_ITEMS = 1;
+  var MAX_ITEMS = 60;
+  var MAX_SOURCE_URL_LENGTH = 512;
+  var IMAGE_SIZES = ['small', 'medium', 'hero', 'large'];
+  var IMAGE_PATH_RE = /^\/api\/image\/([a-z0-9][a-z0-9-]{0,31})\?size=(small|medium|hero|large)$/;
+  var ITEM_ID_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
+  var CATEGORY_ID_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
+  var CONTROL_RE = /[\u0000-\u001f\u007f]/;
+  var WHITESPACE_RE = /\s/;
+  var ALLOWED_SOURCE_HOSTS = ['unsplash.com', 'www.unsplash.com'];
+
+  function isNonEmptyText(value, maxLength) {
+    return (
+      typeof value === 'string' &&
+      value.length > 0 &&
+      value.length <= maxLength &&
+      value.trim().length > 0
+    );
+  }
+
+  /** images 的四个值必须是本站 /api/image/<id>?size=<size>，且 id/size 与本条一致。 */
+  function isSafeImagePath(value, itemId, size) {
+    if (typeof value !== 'string' || value.length > 96) {
+      return false;
+    }
+    if (value.indexOf('\\') !== -1 || value.indexOf('//') !== -1) {
+      return false;
+    }
+    if (CONTROL_RE.test(value) || WHITESPACE_RE.test(value)) {
+      return false;
+    }
+    var match = IMAGE_PATH_RE.exec(value);
+    return !!match && match[1] === itemId && match[2] === size;
+  }
+
+  /** source_url 必须是 https，且主机精确为 unsplash.com 或 www.unsplash.com。 */
+  function isSafeSourceUrl(value) {
+    if (typeof value !== 'string' || value.length < 1 || value.length > MAX_SOURCE_URL_LENGTH) {
+      return false;
+    }
+    if (value.indexOf('\\') !== -1 || WHITESPACE_RE.test(value) || CONTROL_RE.test(value)) {
+      return false;
+    }
+    var parsed;
+    try {
+      parsed = new URL(value);
+    } catch (error) {
+      return false;
+    }
+    if (parsed.protocol !== 'https:') {
+      return false;
+    }
+    if (ALLOWED_SOURCE_HOSTS.indexOf(parsed.hostname) === -1) {
+      return false;
+    }
+    if (parsed.username !== '' || parsed.password !== '') {
+      return false;
+    }
+    // new URL 会把 https 的默认端口 443 规范化掉（parsed.host 不再含端口），
+    // 所以直接检查原始 authority 里是否出现端口或用户信息分隔符。
+    var authority = value.slice('https://'.length).split(/[/?#]/)[0];
+    if (authority.indexOf(':') !== -1 || authority.indexOf('@') !== -1) {
+      return false;
+    }
+    return true;
+  }
+
+  function normalizeItem(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return null;
+    }
+    var id = raw.id;
+    if (typeof id !== 'string' || !ITEM_ID_RE.test(id)) {
+      return null;
+    }
+    if (!isNonEmptyText(raw.title, 40) || CONTROL_RE.test(raw.title)) {
+      return null;
+    }
+    if (typeof raw.category !== 'string' || !CATEGORY_ID_RE.test(raw.category)) {
+      return null;
+    }
+    if (!isNonEmptyText(raw.note, 120) || CONTROL_RE.test(raw.note)) {
+      return null;
+    }
+    if (!isNonEmptyText(raw.author, 100) || CONTROL_RE.test(raw.author)) {
+      return null;
+    }
+    if (!isSafeSourceUrl(raw.source_url)) {
+      return null;
+    }
+    var images = raw.images;
+    if (!images || typeof images !== 'object' || Array.isArray(images)) {
+      return null;
+    }
+    var normalizedImages = {};
+    for (var i = 0; i < IMAGE_SIZES.length; i += 1) {
+      var size = IMAGE_SIZES[i];
+      var path = images[size];
+      if (!isSafeImagePath(path, id, size)) {
+        return null;
+      }
+      normalizedImages[size] = path;
+    }
+    return {
+      id: id,
+      title: raw.title,
+      category: raw.category,
+      note: raw.note,
+      author: raw.author,
+      source_url: raw.source_url,
+      images: normalizedImages
+    };
+  }
+
+  /**
+   * 顶层结构不合法时整页进错误态；单条不合格只丢弃该条并计数。
+   * 返回 { ok: true, data, dropped } 或 { ok: false, reason: 'format' }。
+   */
+  function normalizePayload(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return { ok: false, reason: 'format' };
+    }
+    if (payload.schema_version !== 1) {
+      return { ok: false, reason: 'format' };
+    }
+    if (!Array.isArray(payload.items)) {
+      return { ok: false, reason: 'format' };
+    }
+    if (payload.items.length < MIN_ITEMS || payload.items.length > MAX_ITEMS) {
+      return { ok: false, reason: 'format' };
+    }
+    if (!isNonEmptyText(payload.hero_id, 32)) {
+      return { ok: false, reason: 'format' };
+    }
+    if (!Array.isArray(payload.categories)) {
+      return { ok: false, reason: 'format' };
+    }
+
+    var categories = [];
+    var seenCategories = Object.create(null);
+    for (var c = 0; c < payload.categories.length && categories.length < 8; c += 1) {
+      var entry = payload.categories[c];
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        continue;
+      }
+      var categoryId = entry.id;
+      if (typeof categoryId !== 'string' || !CATEGORY_ID_RE.test(categoryId)) {
+        continue;
+      }
+      if (!isNonEmptyText(entry.label, 24)) {
+        continue;
+      }
+      if (seenCategories[categoryId]) {
+        continue;
+      }
+      seenCategories[categoryId] = true;
+      categories.push({ id: categoryId, label: entry.label });
+    }
+    if (categories.length === 0) {
+      return { ok: false, reason: 'format' };
+    }
+
+    var items = [];
+    var seenIds = Object.create(null);
+    var dropped = 0;
+    for (var n = 0; n < payload.items.length; n += 1) {
+      var item = normalizeItem(payload.items[n]);
+      if (!item || seenIds[item.id]) {
+        dropped += 1;
+        continue;
+      }
+      seenIds[item.id] = true;
+      items.push(item);
+    }
+    if (items.length === 0) {
+      return { ok: false, reason: 'format' };
+    }
+
+    var hero = null;
+    for (var h = 0; h < items.length; h += 1) {
+      if (items[h].id === payload.hero_id) {
+        hero = items[h];
+        break;
+      }
+    }
+
+    return {
+      ok: true,
+      data: {
+        heroId: payload.hero_id,
+        hero: hero,
+        categories: categories,
+        items: items
+      },
+      dropped: dropped
+    };
+  }
+  /* @fieldnotes:validation-end */
+
+  var REQUEST_TIMEOUT_MS = 8000;
+  var GALLERY_ENDPOINT = '/api/gallery';
+  var PLACEHOLDER_SRC = '/assets/placeholder.svg';
+  var ALL_CATEGORY = 'all';
+  // 与 site.css 的 3 / 2 / 1 列断点（1024 / 640）和 20px 移动端留白对应。
+  var CARD_SIZES_ATTR =
+    '(max-width: 639px) calc(100vw - 40px), (max-width: 1023px) calc(50vw - 44px), 368px';
+
+  var MESSAGES = {
+    loading: '正在载入图集…',
+    request: '图集请求失败，可能是网络或服务端暂时不可用。下方的随记与关于内容不受影响。',
+    timeout: '图集请求超时，网络可能较慢或服务端没有响应。可以点下面的按钮再试一次。',
+    format: '图集数据格式不正确，暂时无法显示。这不影响页面上的其他文字。',
+    unavailable: '图集组件未能加载，静态内容仍可阅读。'
+  };
+
+  function makeGalleryError(kind) {
+    return { galleryError: kind };
+  }
+
+  function boot() {
+    var mountEl = document.getElementById('gallery-app');
+    var statusEl = document.querySelector('[data-gallery-status]');
+
+    // 联系页等没有挂载点的页面：安静退出，不发任何请求。
+    if (!mountEl) {
+      return;
+    }
+
+    var Vue = window.Vue;
+    if (!Vue || typeof Vue.h !== 'function' || typeof Vue.createApp !== 'function') {
+      if (statusEl) {
+        statusEl.textContent = MESSAGES.unavailable;
+      }
+      return;
+    }
+
+    var app;
+    try {
+      while (mountEl.firstChild) {
+        mountEl.removeChild(mountEl.firstChild);
+      }
+      app = Vue.createApp(createGalleryRoot(Vue));
+      app.mount(mountEl);
+    } catch (error) {
+      // 挂载失败时绝不留下空白动态区，也不清掉页面其他静态内容。
+      var fallback = document.createElement('p');
+      fallback.className = 'status';
+      fallback.textContent = MESSAGES.unavailable;
+      mountEl.appendChild(fallback);
+      if (app && typeof app.unmount === 'function') {
+        try {
+          app.unmount();
+        } catch (unmountError) {
+          /* 已经无法卸载，保持上面的静态提示即可 */
+        }
+      }
+    }
+  }
+
+  function createGalleryRoot(Vue) {
+    var h = Vue.h;
+    var ref = Vue.ref;
+    var reactive = Vue.reactive;
+    var computed = Vue.computed;
+    var watch = Vue.watch;
+    var nextTick = Vue.nextTick;
+    var onMounted = Vue.onMounted;
+    var onUnmounted = Vue.onUnmounted;
+
+    return {
+      name: 'GalleryRoot',
+      setup: function () {
+        var loading = ref(false);
+        var error = ref(null);
+        var data = ref(null);
+        var activeCategory = ref(ALL_CATEGORY);
+        var selectedItem = ref(null);
+
+        var fallbackKeys = reactive(Object.create(null));
+
+        var controller = null;
+        var timeoutId = 0;
+        var timedOut = false;
+        var disposed = false;
+        var triggerEl = null;
+        var dialogEl = null;
+
+        var visibleItems = computed(function () {
+          var current = data.value;
+          if (!current) {
+            return [];
+          }
+          if (activeCategory.value === ALL_CATEGORY) {
+            return current.items;
+          }
+          return current.items.filter(function (item) {
+            return item.category === activeCategory.value;
+          });
+        });
+
+        function abortActive() {
+          if (timeoutId) {
+            window.clearTimeout(timeoutId);
+            timeoutId = 0;
+          }
+          if (controller) {
+            var pending = controller;
+            controller = null;
+            try {
+              pending.abort();
+            } catch (abortError) {
+              /* 已完成的请求再 abort 也无害 */
+            }
+          }
+        }
+
+        function load() {
+          if (loading.value) {
+            return;
+          }
+          abortActive();
+          loading.value = true;
+          error.value = null;
+          timedOut = false;
+
+          var local = new AbortController();
+          controller = local;
+          timeoutId = window.setTimeout(function () {
+            timedOut = true;
+            try {
+              local.abort();
+            } catch (abortError) {
+              /* 忽略 */
+            }
+          }, REQUEST_TIMEOUT_MS);
+
+          fetch(GALLERY_ENDPOINT, {
+            headers: { Accept: 'application/json' },
+            signal: local.signal
+          })
+            .then(function (response) {
+              if (!response.ok) {
+                throw makeGalleryError('request');
+              }
+              var contentType = (response.headers.get('content-type') || '').toLowerCase();
+              if (contentType.indexOf('application/json') === -1) {
+                throw makeGalleryError('format');
+              }
+              return response.text();
+            })
+            .then(function (text) {
+              var payload;
+              try {
+                payload = JSON.parse(text);
+              } catch (parseError) {
+                throw makeGalleryError('format');
+              }
+              var result = normalizePayload(payload);
+              if (!result.ok) {
+                throw makeGalleryError('format');
+              }
+              if (result.dropped > 0) {
+                console.warn(
+                  '[fieldnotes] 已忽略 ' + result.dropped + ' 条不符合约定的图集条目'
+                );
+              }
+              return result.data;
+            })
+            .then(function (nextData) {
+              if (disposed) {
+                return;
+              }
+              data.value = nextData;
+              activeCategory.value = ALL_CATEGORY;
+              selectedItem.value = null;
+            })
+            .catch(function (failure) {
+              if (disposed) {
+                return;
+              }
+              if (failure && failure.name === 'AbortError') {
+                if (!timedOut) {
+                  // 卸载或主动取消，不展示错误。
+                  return;
+                }
+                error.value = { kind: 'timeout', message: MESSAGES.timeout };
+                return;
+              }
+              var kind = failure && failure.galleryError;
+              if (kind === 'format' || kind === 'request') {
+                error.value = { kind: kind, message: MESSAGES[kind] };
+                return;
+              }
+              error.value = { kind: 'request', message: MESSAGES.request };
+            })
+            .then(function () {
+              window.clearTimeout(timeoutId);
+              timeoutId = 0;
+              if (controller === local) {
+                controller = null;
+              }
+              if (!disposed) {
+                loading.value = false;
+              }
+            });
+        }
+
+        function onImageError(key, event) {
+          if (fallbackKeys[key]) {
+            return;
+          }
+          fallbackKeys[key] = true;
+          var img = event && event.currentTarget;
+          if (img && img.tagName === 'IMG') {
+            // 先去掉 srcset/sizes，避免浏览器继续挑选已经失败的候选。
+            if (img.hasAttribute('srcset')) {
+              img.removeAttribute('srcset');
+            }
+            if (img.hasAttribute('sizes')) {
+              img.removeAttribute('sizes');
+            }
+            img.setAttribute('src', PLACEHOLDER_SRC);
+            var container = img.parentNode;
+            if (container && container.classList) {
+              container.classList.add('is-fallback');
+            }
+          }
+        }
+
+        function openItem(item, element) {
+          triggerEl = element || null;
+          selectedItem.value = item;
+        }
+
+        function restoreFocus() {
+          var target = triggerEl;
+          triggerEl = null;
+          if (target && target.isConnected !== false) {
+            try {
+              target.focus();
+            } catch (focusError) {
+              /* 元素已不可聚焦时保持浏览器默认行为 */
+            }
+          }
+        }
+
+        function handleDialogClose() {
+          selectedItem.value = null;
+          restoreFocus();
+        }
+
+        // 原生 close 事件是异步排队的：若期间对话框已被重新打开，这次事件已过期，不能清状态。
+        function onDialogCloseEvent() {
+          if (dialogEl && dialogEl.open) {
+            return;
+          }
+          handleDialogClose();
+        }
+
+        function closeDialog() {
+          if (dialogEl && dialogEl.open) {
+            try {
+              dialogEl.close();
+            } catch (closeError) {
+              /* 关闭失败时仍然同步状态，避免留下看不见的选中项 */
+            }
+          }
+          // 不依赖 close 事件是否送达：先同步状态并还焦点，事件再次到达时是幂等的。
+          handleDialogClose();
+        }
+
+        function handleDialogCancel(event) {
+          // 不让 Esc 走浏览器默认关闭，统一走一次 close()，保证状态与焦点一致。
+          if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+          }
+          closeDialog();
+        }
+
+        function handleDialogClick(event) {
+          if (event && event.target === dialogEl) {
+            closeDialog();
+          }
+        }
+
+        function setDialogRef(element) {
+          dialogEl = element || null;
+        }
+
+        function renderStatus(text) {
+          return h(
+            'p',
+            { class: 'status status--loading', role: 'status' },
+            text
+          );
+        }
+
+        function renderError() {
+          return h('div', { class: 'status status--error' }, [
+            h('p', { role: 'alert' }, error.value.message),
+            h(
+              'button',
+              {
+                type: 'button',
+                class: 'retry-btn',
+                disabled: loading.value,
+                onClick: function () {
+                  load();
+                }
+              },
+              '重试'
+            )
+          ]);
+        }
+
+        function renderHero(item) {
+          var key = 'hero:' + item.id;
+          var failed = !!fallbackKeys[key];
+          return h('figure', { class: 'hero' }, [
+            h(
+              'div',
+              { class: failed ? 'hero__media is-fallback' : 'hero__media' },
+              [
+                h('img', {
+                  class: 'hero__img',
+                  src: failed ? PLACEHOLDER_SRC : item.images.hero,
+                  alt: failed
+                    ? '图片暂时无法显示'
+                    : '《' + item.title + '》，摄影：' + item.author,
+                  width: 1600,
+                  height: 900,
+                  loading: 'eager',
+                  fetchpriority: 'high',
+                  decoding: 'async',
+                  onError: function (event) {
+                    onImageError(key, event);
+                  }
+                })
+              ]
+            ),
+            h('figcaption', { class: 'hero__caption' }, [
+              h('p', { class: 'hero__title' }, item.title),
+              h('p', { class: 'hero__note' }, item.note),
+              h('p', { class: 'hero__meta' }, [
+                h('span', null, '作者 · ' + item.author),
+                h(
+                  'a',
+                  {
+                    class: 'text-link',
+                    href: item.source_url,
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                  },
+                  '查看原始页面'
+                )
+              ])
+            ])
+          ]);
+        }
+
+        function renderFilterButton(id, label) {
+          var active = activeCategory.value === id;
+          return h(
+            'button',
+            {
+              type: 'button',
+              class: active ? 'filter-btn is-active' : 'filter-btn',
+              'aria-pressed': active ? 'true' : 'false',
+              onClick: function () {
+                activeCategory.value = id;
+              }
+            },
+            label
+          );
+        }
+
+        function renderFilters(categories) {
+          var buttons = [renderFilterButton(ALL_CATEGORY, '全部')];
+          for (var i = 0; i < categories.length; i += 1) {
+            buttons.push(renderFilterButton(categories[i].id, categories[i].label));
+          }
+          return h(
+            'div',
+            { class: 'filters', role: 'group', 'aria-label': '按分类筛选' },
+            buttons
+          );
+        }
+
+        function renderCard(item) {
+          var key = 'card:' + item.id;
+          var failed = !!fallbackKeys[key];
+          // 结构：article > (button.card__open > span.card__media > img) + div.card__body
+          // 图片区用真正的 button 承载点击与键盘操作；来源链接放在按钮之外，
+          // 避免"交互元素嵌套交互元素"导致链接无法 Tab 到达。
+          return h('article', { class: 'card' }, [
+            h(
+              'button',
+              {
+                type: 'button',
+                class: 'card__open',
+                'aria-haspopup': 'dialog',
+                'aria-label': '查看《' + item.title + '》大图',
+                onClick: function (event) {
+                  openItem(item, event.currentTarget);
+                }
+              },
+              [
+                h(
+                  'span',
+                  { class: failed ? 'card__media is-fallback' : 'card__media' },
+                  [
+                    h('img', {
+                      class: 'card__img',
+                      src: failed ? PLACEHOLDER_SRC : item.images.small,
+                      srcset: failed
+                        ? undefined
+                        : item.images.small + ' 480w, ' + item.images.medium + ' 960w',
+                      sizes: failed ? undefined : CARD_SIZES_ATTR,
+                      alt: '',
+                      width: 960,
+                      height: 640,
+                      loading: 'lazy',
+                      decoding: 'async',
+                      onError: function (event) {
+                        onImageError(key, event);
+                      }
+                    })
+                  ]
+                )
+              ]
+            ),
+            h('div', { class: 'card__body' }, [
+              h('p', { class: 'card__title' }, item.title),
+              h('p', { class: 'card__note' }, item.note),
+              h('p', { class: 'card__meta' }, [
+                h('span', null, '作者 · ' + item.author),
+                h(
+                  'a',
+                  {
+                    class: 'card__source',
+                    href: item.source_url,
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                  },
+                  '查看原始页面'
+                )
+              ])
+            ])
+          ]);
+        }
+
+        function renderGallery() {
+          var items = visibleItems.value;
+          return h(
+            'ul',
+            { class: 'gallery' },
+            items.map(function (item) {
+              return h('li', { key: item.id }, [renderCard(item)]);
+            })
+          );
+        }
+
+        function renderLightboxBody(item) {
+          var key = 'large:' + item.id;
+          var failed = !!fallbackKeys[key];
+          return h('div', { class: 'lightbox__panel' }, [
+            h(
+              'button',
+              {
+                type: 'button',
+                class: 'lightbox__close',
+                'aria-label': '关闭大图',
+                onClick: function () {
+                  closeDialog();
+                }
+              },
+              '×'
+            ),
+            h('figure', { class: 'lightbox__figure' }, [
+              h('img', {
+                class: 'lightbox__img',
+                src: failed ? PLACEHOLDER_SRC : item.images.large,
+                alt: failed
+                  ? '图片暂时无法显示'
+                  : '《' + item.title + '》，摄影：' + item.author,
+                width: 1920,
+                height: 1280,
+                decoding: 'async',
+                onError: function (event) {
+                  onImageError(key, event);
+                }
+              }),
+              h('figcaption', { class: 'lightbox__caption' }, [
+                h('p', { class: 'lightbox__title' }, item.title),
+                h('p', { class: 'lightbox__note' }, item.note),
+                h('p', { class: 'lightbox__note' }, '作者 · ' + item.author),
+                h(
+                  'p',
+                  null,
+                  [
+                    h(
+                      'a',
+                      {
+                        class: 'text-link',
+                        href: item.source_url,
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                      },
+                      '查看 Unsplash 原始页面'
+                    )
+                  ]
+                )
+              ])
+            ])
+          ]);
+        }
+
+        function renderDialog() {
+          var item = selectedItem.value;
+          return h(
+            'dialog',
+            {
+              class: 'lightbox',
+              'aria-label': '图片详情',
+              ref: setDialogRef,
+              onClose: onDialogCloseEvent,
+              onCancel: handleDialogCancel,
+              onClick: handleDialogClick
+            },
+            item ? [renderLightboxBody(item)] : []
+          );
+        }
+
+        function render() {
+          if (error.value) {
+            return renderError();
+          }
+          var current = data.value;
+          if (!current) {
+            return renderStatus(MESSAGES.loading);
+          }
+          var nodes = [];
+          if (current.hero) {
+            nodes.push(renderHero(current.hero));
+          }
+          nodes.push(renderFilters(current.categories));
+          nodes.push(renderGallery());
+          nodes.push(renderDialog());
+          return nodes;
+        }
+
+        watch(selectedItem, function (item) {
+          if (!item) {
+            return;
+          }
+          nextTick(function () {
+            if (disposed || !dialogEl || dialogEl.open) {
+              return;
+            }
+            try {
+              dialogEl.showModal();
+            } catch (showError) {
+              // 无法打开时回退到状态清理，避免留下看不见的选中项。
+              selectedItem.value = null;
+              restoreFocus();
+            }
+          });
+        });
+
+        onMounted(function () {
+          load();
+        });
+
+        onUnmounted(function () {
+          disposed = true;
+          abortActive();
+          triggerEl = null;
+          dialogEl = null;
+        });
+
+        return render;
+      }
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+
+/* fieldnotes. — 联系页留言表单的唯一脚本。
+ *
+ * 只做一件事：拦截原生提交，用同源 fetch 把三项内容 POST 给 /api/contact，
+ * 然后在本页给出结果。不写 localStorage、不发第三方请求、不拼 HTML
+ * （CSP 无 unsafe-inline，全部状态用类名与 textContent 表达）。
+ */
+(function () {
+  'use strict';
+
+  var form = document.querySelector('[data-contact-form]');
+  if (!form || typeof window.fetch !== 'function') {
+    return;
+  }
+
+  var statusEl = form.querySelector('[data-contact-status]');
+  var submitEl = form.querySelector('button[type="submit"]');
+  var LIMITS = { name: 40, contact: 80, message: 1000 };
+  var TIMEOUT_MS = 10000;
+  var busy = false;
+
+  function setStatus(text, kind) {
+    if (!statusEl) {
+      return;
+    }
+    statusEl.textContent = text;
+    statusEl.className = 'form-status' + (kind ? ' form-status--' + kind : '');
+  }
+
+  function readValue(field) {
+    var el = form.elements.namedItem(field);
+    return el && typeof el.value === 'string' ? el.value.trim() : '';
+  }
+
+  function collect() {
+    var data = {};
+    var missing = [];
+    for (var field in LIMITS) {
+      if (!Object.prototype.hasOwnProperty.call(LIMITS, field)) {
+        continue;
+      }
+      var value = readValue(field);
+      if (!value) {
+        missing.push(field);
+      } else if (value.length > LIMITS[field]) {
+        return { error: '超出长度限制，请精简后再提交。' };
+      }
+      data[field] = value;
+    }
+    if (missing.length) {
+      return { error: '请填写称呼、联系方式和留言。' };
+    }
+    return { data: data };
+  }
+
+  function setBusy(next) {
+    busy = next;
+    form.setAttribute('aria-busy', next ? 'true' : 'false');
+    if (submitEl) {
+      submitEl.disabled = next;
+    }
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (busy) {
+      return;
+    }
+
+    var collected = collect();
+    if (collected.error) {
+      setStatus(collected.error, 'error');
+      return;
+    }
+
+    setBusy(true);
+    setStatus('正在提交…', 'pending');
+
+    var controller = new AbortController();
+    var timer = window.setTimeout(function () {
+      controller.abort();
+    }, TIMEOUT_MS);
+
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(collected.data),
+      signal: controller.signal
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('http-' + response.status);
+        }
+        return response.json().catch(function () {
+          return null;
+        });
+      })
+      .then(function (payload) {
+        if (!payload || payload.status !== 'received') {
+          throw new Error('unexpected-payload');
+        }
+        form.reset();
+        setStatus('已提交，谢谢你的留言。', 'ok');
+      })
+      .catch(function () {
+        setStatus('提交没有成功，请稍后再试一次。', 'error');
+      })
+      .then(function () {
+        window.clearTimeout(timer);
+        setBusy(false);
+      });
+  });
+})();
+});
+</script>
+</body>
+</html>
