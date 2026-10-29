@@ -71,12 +71,13 @@ mark_once() {
 
 usage() {
     cat <<'EOF'
-用法：sudo bash deploy.sh [all|xray|nginx|check]
+用法：sudo bash deploy.sh [all|xray|nginx|check|info]
 首次使用先复制 deploy.conf.example 为 deploy.conf 并编辑；all 是默认动作。
   all    安装/复用 Xray，接入已有 HTTPS 站点，并检查入口
   xray   只安装/复用 Xray 并检查后端，无需填写域名
   nginx  复用已配置的 Xray，仅接入 Nginx 并检查入口
   check  只检查后端及已配置的 HTTPS 入口，不安装或重载服务
+  info   读取现有配置，集中显示连接参数和客户端节点 YAML，不检查/启停服务
 此工具不新建网站、不申请证书，不自动升级已有 Xray。
 EOF
 }
@@ -440,12 +441,16 @@ check_backend() {
     say "后端通过：active / enabled / 仅 127.0.0.1:$XRAY_PORT / 根路径 404 / OPTIONS 200。"
 }
 
-nginx_environment() {
-    local candidate dump
-    step '定位现有 Nginx 和 HTTPS 站点'
+validate_domain() {
     SITE_DOMAIN="${SITE_DOMAIN,,}"
     [[ ${#SITE_DOMAIN} -le 253 && "$SITE_DOMAIN" =~ ^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] ||
         die '请在 deploy.conf 填写 SITE_DOMAIN，仅填域名，不带 https://、端口或路径。'
+}
+
+nginx_environment() {
+    local candidate dump
+    step '定位现有 Nginx 和 HTTPS 站点'
+    validate_domain
     if [[ -z "$NGINX_BIN" ]]; then
         if [[ -x /www/server/nginx/sbin/nginx ]]; then NGINX_BIN=/www/server/nginx/sbin/nginx
         else NGINX_BIN="$(command -v nginx || true)"; fi
@@ -607,11 +612,78 @@ save_info() {
     else say "连接参数未变化，保留原文件：$STATE_DIR/node.env"; fi
 }
 
+print_client_summary() {
+    printf '\n========== 客户端连接参数 ==========\n'
+    case "$ACTION" in
+        xray) printf '状态：仅本机 Xray 后端通过检查，尚未验收 Nginx / HTTPS 入口。\n';;
+        info) printf '状态：仅从现有配置读取参数，未检查服务或 HTTPS 入口是否可用。\n';;
+        *) printf '状态：后端及本机 HTTPS 入口检查通过；公网连接仍需客户端实测。\n';;
+    esac
+    printf '协议：VLESS\n传输方式：XHTTP\n客户端 XHTTP 模式：packet-up\n'
+    printf 'UUID：%s\nXHTTP 路径：%s\n' "$XRAY_UUID" "$XRAY_PATH"
+    printf '客户端端口：443\nTLS：开启\n证书验证：开启（skip-cert-verify: false）\n'
+    printf 'ALPN：h2\n客户端指纹：chrome\nFlow：留空\n'
+    if [[ -n "$SITE_DOMAIN" ]]; then
+        printf '服务器地址：%s\nTLS SNI / servername：%s\nHTTP Host：%s\n' \
+            "$SITE_DOMAIN" "$SITE_DOMAIN" "$SITE_DOMAIN"
+        printf 'XHTTP 入口：https://%s%s\n' "$SITE_DOMAIN" "$XRAY_PATH"
+        printf '域名 DNS 需指向本服务器；若用 IP 连接，只改 server，SNI 和 Host 保留域名。\n'
+    else
+        printf '服务器地址 / SNI / Host：未填写 SITE_DOMAIN；填写并完成 nginx 阶段后再连接。\n'
+    fi
+    printf '\n本机后端监听：127.0.0.1:%s（这是内部端口，不填到客户端）\n' "$XRAY_PORT"
+    printf 'Xray 配置：%s\n' "$XRAY_CONFIG"
+    if [[ -n "${NGINX_SITE:-}" ]]; then printf 'Nginx 站点文件：%s\n' "$NGINX_SITE"; fi
+    if [[ -f "$STATE_DIR/node.env" ]]; then printf '参数存档：%s/node.env\n' "$STATE_DIR"; fi
+    printf '再次查看：在脚本目录运行 sudo bash deploy.sh info\n'
+    if [[ -n "$SITE_DOMAIN" ]]; then
+        printf '\n下方是节点片段：合并到现有配置的 proxies 列表，再将节点名加入使用的策略组。\n'
+        printf '节点片段不包含端口监听、策略组或规则，不能直接替代完整客户端配置。\n'
+        if [[ "$ACTION" == xray || "$ACTION" == info ]]; then
+            printf '此片段仅根据已保存的参数生成，不代表公网入口已验证。\n'
+        fi
+        printf '\n----- BEGIN MIHOMO NODE -----\n'
+        cat <<EOF
+proxies:
+  - name: "self-backup-$SITE_DOMAIN"
+    type: vless
+    server: "$SITE_DOMAIN"
+    port: 443
+    uuid: "$XRAY_UUID"
+    udp: true
+    packet-encoding: xudp
+    tls: true
+    servername: "$SITE_DOMAIN"
+    skip-cert-verify: false
+    client-fingerprint: chrome
+    alpn: [h2]
+    network: xhttp
+    xhttp-opts:
+      host: "$SITE_DOMAIN"
+      path: "$XRAY_PATH"
+      mode: packet-up
+      reuse-settings:
+        max-connections: "1"
+EOF
+        printf '%s\n' '----- END MIHOMO NODE -----'
+    fi
+    printf '\n以上 UUID、路径及 YAML 包含连接凭据，请勿公开分享部署日志。\n'
+}
+
 main() {
     ACTION="${1:-all}"
-    case "$ACTION" in -h|--help|help) usage; return 0;; all|xray|nginx|check) ;; *) usage; die '未知动作。';; esac
+    case "$ACTION" in -h|--help|help) usage; return 0;; all|xray|nginx|check|info) ;; *) usage; die '未知动作。';; esac
     [[ $# -le 1 ]] || die '只接受一个阶段参数，请在 deploy.conf 填写其他设置。'
     environment
+    if [[ "$ACTION" == info || "$ACTION" == xray ]] && [[ -n "$SITE_DOMAIN" ]]; then validate_domain; fi
+    if [[ "$ACTION" == info ]]; then
+        command -v python3 >/dev/null || die '读取现有配置需要 python3。'
+        step '读取现有连接参数（不安装、不检查或启停服务）'
+        load_xray
+        [[ "$XRAY_STATE" == ready ]] || die '尚无可读取的完整 Xray 配置，请先完成 xray 阶段。'
+        print_client_summary
+        return 0
+    fi
     dependencies
     # Check the existing site before installing a backend during an all-in-one run.
     if [[ "$ACTION" != xray ]]; then nginx_environment; fi
@@ -629,6 +701,7 @@ main() {
     else
         say '还需在实际客户端连接并访问外部网站，才能完成公网端到端验收。'
     fi
+    print_client_summary
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi
