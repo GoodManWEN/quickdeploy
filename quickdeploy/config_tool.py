@@ -24,7 +24,12 @@ def read_xray(filename, port):
     p = Path(filename)
     if not p.exists():
         return ['empty']
-    cfg = json.loads(p.read_text(encoding='utf-8'))
+    raw = p.read_text(encoding='utf-8')
+    # The installer can be interrupted between creating this file and writing {}.
+    # Shell-side ownership/completion guards decide whether empty is recoverable.
+    if not raw.strip():
+        return ['empty']
+    cfg = json.loads(raw)
     if cfg == {}:
         return ['empty']
     ins = cfg.get('inbounds', [])
@@ -216,6 +221,17 @@ def route_block(route, port):
 
 def patch_nginx(text, domain, route, port):
     server = target_server(parse(text), domain)
+    newline = '\r\n' if '\r\n' in text and '\n' not in text.replace('\r\n', '') else '\n'
+    block = route_block(route, port).replace('\n', newline)
+    expected = parse(block)[0]
+
+    def equivalent(node):
+        # These are only independent, leaf proxy settings; compare multiplicities too.
+        return (node['words'] == expected['words'] and
+                not any(n['open'] is not None for n in node['children']) and
+                sorted(tuple(n['words']) for n in node['children']) ==
+                sorted(tuple(n['words']) for n in expected['children']))
+
     starts = list(re.finditer(r'(?m)^[ \t]*' + re.escape(BEGIN) + r'[ \t]*\r?$', text))
     ends = list(re.finditer(r'(?m)^[ \t]*' + re.escape(END) + r'[ \t]*\r?$', text))
     if len(starts) != len(ends) or len(starts) > 1:
@@ -233,18 +249,24 @@ def patch_nginx(text, domain, route, port):
         if (len(managed) != 1 or managed[0]['words'][0:2] != ['location', '^~'] or
                 not start < managed[0]['close'] < end):
             raise ValueError('受管标记范围不是独立的 location，未修改。')
-    for n in server['children']:
-        if n['words'][0] == 'location' and route in n['words'][1:]:
-            if not span or not span[0] <= n['start'] < span[1]:
-                raise ValueError('该路径已有手工 location；请保留现有配置并使用 check，'
-                                 '或自行处理重复路由后再运行 nginx 阶段。')
-    block = route_block(route, port)
+    same_path = [n for n in server['children']
+                 if n['words'][0] == 'location' and route in n['words'][1:]]
+    if len(same_path) > 1:
+        raise ValueError('该路径有多个 location，未修改。')
+    if same_path:
+        node = same_path[0]
+        inside = span and span[0] <= node['start'] < span[1]
+        if not inside and (span or not equivalent(node)):
+            raise ValueError('该路径已有不同的手工 location，未覆盖。')
+        if equivalent(node):
+            # Preserve comments, whitespace and existing hand-written locations exactly.
+            return text
     if span:
         return text[:span[0]] + block + text[span[1]:]
     closing = server['close']
     line_start = text.rfind('\n', 0, closing) + 1
     insertion = line_start if not text[line_start:closing].strip() else closing
-    return text[:insertion] + '\n' + block + text[insertion:]
+    return text[:insertion] + newline + block + text[insertion:]
 
 
 def main(args):
@@ -255,9 +277,12 @@ def main(args):
         write_xray(*args[1:])
     elif action == 'nginx-write':
         source, destination, domain, route, port = args[1:]
-        text = Path(source).read_text(encoding='utf-8')
+        # Path.read_text performs universal-newline conversion, altering unrelated
+        # CRLF configuration lines on the first edit. Preserve the original bytes.
+        text = Path(source).read_bytes().decode('utf-8')
         updated = patch_nginx(text, domain, route, port)
-        Path(destination).write_text(updated, encoding='utf-8')
+        if updated != text:
+            Path(destination).write_bytes(updated.encode('utf-8'))
         print('unchanged' if updated == text else 'changed')
     elif action == 'included':
         dump, site = args[1:]

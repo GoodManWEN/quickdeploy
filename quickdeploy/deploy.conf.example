@@ -1,3 +1,5 @@
+# 首次使用：cp -n deploy.conf.example deploy.conf，然后编辑 deploy.conf。
+# 更新脚本时保留已有 deploy.conf；不要用此空白示例覆盖它。
 # 每台服务器只需填写它自己的域名；先用宝塔或现有 Nginx 建好 HTTPS 网站。
 SITE_DOMAIN=''
 
@@ -11,4 +13,4 @@ NGINX_MAIN=''
 
 # 与此前已验证的方案保持一致；本脚本不会自动升级已有 Xray。
 XRAY_VERSION='v26.10.21'
-XRAY_PORT=10099
+XRAY_PORT=10080
